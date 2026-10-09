@@ -31,7 +31,10 @@ const formattedDate = publishDate.toLocaleDateString('en-US', {
 });
 ---
 
-<Layout title={`${title} — Photography`}>
+<Layout title={`${title} — Photography`}
+  description={description}
+  ogImage={coverImage.src}
+>
   <main class="collection">
     <div class="collection__hero">
       <Image
