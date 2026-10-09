@@ -1,0 +1,219 @@
+---
+import { Image } from 'astro:assets';
+import type { GalleryImage } from '../lib/galleryImages';
+
+interface Props {
+  images: GalleryImage[];
+}
+
+const { images } = Astro.props;
+---
+
+<div class="gallery">
+  {images.map(({ image }, i) => (
+    <button class="gallery__item" data-index={i} aria-label="Open image">
+      <Image src={image} alt="" width={800} class="gallery__image" />
+    </button>
+  ))}
+</div>
+
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <button class="lightbox__close" id="lightbox-close" aria-label="Close">&times;</button>
+  <button class="lightbox__arrow lightbox__prev" id="lightbox-prev" aria-label="Previous"></button>
+  <button class="lightbox__arrow lightbox__next" id="lightbox-next" aria-label="Next"></button>
+  <img src="" alt="" class="lightbox__image" id="lightbox-image" />
+  <div class="lightbox__exif">
+    <p class="lightbox__exif-camera" id="lightbox-camera"></p>
+    <p class="lightbox__exif-settings" id="lightbox-settings"></p>
+  </div>
+</div>
+
+<script define:vars={{
+  images: images.map(({ image }) => image.src),
+  exifData: images.map(({ exif }) => exif),
+}}>
+
+function initGallery() {
+  const lightbox = document.getElementById('lightbox');
+  if (!lightbox) return; // guards against running on pages with no gallery
+
+  const lightboxImage = document.getElementById('lightbox-image');
+  const lightboxCamera = document.getElementById('lightbox-camera');
+  const lightboxSettings = document.getElementById('lightbox-settings');
+  const closeBtn = document.getElementById('lightbox-close');
+  const prevBtn = document.getElementById('lightbox-prev');
+  const nextBtn = document.getElementById('lightbox-next');
+  const items = document.querySelectorAll('.gallery__item');
+
+  let current = 0;
+
+  function formatExifCamera(exif) {
+    const parts = [];
+    if (exif.camera) parts.push(exif.camera);
+    if (exif.lens) parts.push(exif.lens);
+    return parts.join(' · ');
+  }
+
+  function formatExifSettings(exif) {
+    const parts = [];
+    if (exif.aperture) parts.push(`f/${exif.aperture}`);
+    if (exif.shutterSpeed) parts.push(exif.shutterSpeed);
+    if (exif.iso) parts.push(`ISO ${exif.iso}`);
+    return parts.join(' · ');
+  }
+
+  function render() {
+    lightboxImage.src = images[current];
+    lightboxCamera.textContent = formatExifCamera(exifData[current]);
+    lightboxSettings.textContent = formatExifSettings(exifData[current]);
+  }
+
+  function open(index) {
+    current = index;
+    render();
+    lightbox.classList.add('is-open');
+    lightbox.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('lightbox-open');
+  }
+
+  function close() {
+    lightbox.classList.remove('is-open');
+    lightbox.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('lightbox-open');
+  }
+
+  function show(index) {
+    current = (index + images.length) % images.length;
+    render();
+  }
+
+  items.forEach((item) => {
+    item.addEventListener('click', () => open(Number(item.dataset.index)));
+  });
+
+  closeBtn.addEventListener('click', close);
+  prevBtn.addEventListener('click', () => show(current - 1));
+  nextBtn.addEventListener('click', () => show(current + 1));
+
+  document.addEventListener('keydown', (e) => {
+    if (!lightbox.classList.contains('is-open')) return;
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') show(current - 1);
+    if (e.key === 'ArrowRight') show(current + 1);
+  });
+}
+
+document.addEventListener('astro:page-load', initGallery);
+</script>
+
+<style>
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-auto-flow: dense;
+    gap: 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem;
+  }
+
+  .gallery__item {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .gallery__image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+  }
+
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    z-index: 200;
+  }
+
+  .lightbox.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .lightbox__image {
+    max-width: 90vw;
+    max-height: 90vh;
+    object-fit: contain;
+  }
+
+  .lightbox__close {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 2.5rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .lightbox__arrow {
+    position: absolute;
+    top: 50%;
+    width: 24px;
+    height: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+
+  .lightbox__arrow::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-top: 3px solid #fff;
+    border-right: 3px solid #fff;
+  }
+
+  .lightbox__prev {
+    left: 2rem;
+    transform: translateY(-50%) rotate(-135deg);
+  }
+
+  .lightbox__next {
+    right: 2rem;
+    transform: translateY(-50%) rotate(45deg);
+  }
+
+  .lightbox__exif {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    color: #fff;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  .lightbox__exif-camera,
+  .lightbox__exif-settings {
+    margin: 0.25rem 0;
+  }
+</style>

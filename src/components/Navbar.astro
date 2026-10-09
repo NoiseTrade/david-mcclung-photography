@@ -1,0 +1,30 @@
+---
+import { SITE } from '../site.config';
+import Burger from './Burger.astro';
+import NavMenu from './NavMenu.astro';
+---
+
+<nav class="navbar">
+  <a href="/" class="navbar__logo">{SITE.name}</a>
+  <Burger />
+</nav>
+
+<NavMenu />
+
+<style>
+  .navbar {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    justify-content: space-between;
+  }
+
+  .navbar__logo {
+    font-family: 'Inconsolata', monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+    color: inherit;
+  }
+</style>

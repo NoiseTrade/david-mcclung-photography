@@ -1,0 +1,180 @@
+---
+import { Image } from 'astro:assets';
+
+interface Props {
+  title: string;
+  volume: string;
+  publishDate: Date;
+  coverImage: ImageMetadata;
+  tags: string[];
+  slug: string;
+  category?: 'digital' | 'film' | 'b-sides';
+  size?: 'large' | 'small';
+}
+
+const { title, volume, publishDate, coverImage, tags, slug, size = 'large', category = 'digital' } = Astro.props;
+
+const formattedDate = publishDate
+  ? publishDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  : '';
+
+
+const categoryColors: Record<string, string> = {
+  digital: '#f4f4f3',
+  film: '#f7f1e3',
+  'b-sides': '#eaf2f7',
+};
+
+const coverBackground = categoryColors[category] ?? categoryColors.digital;
+---
+
+<div class="cover-stage">
+  <a href={`/collections/${slug}`} class="cover" data-tilt style={`background: ${coverBackground};`}>    <div class="cover__header">
+       <span>{volume} </span>
+       <span>{formattedDate} </span>
+    </div>
+
+    <div class="cover__image-wrap">
+      <Image
+        src={coverImage}
+        alt={title}
+        width={1000}
+        height={1300}
+        class="cover__image"
+        transition:name={`cover-image-${slug}`}
+      />
+      <div class="cover__scrim"></div>
+      <h2 class="cover__title" transition:name={`cover-title-${slug}`}>{title}</h2>
+    </div>
+
+    <div class="cover__footer">
+      {tags.map((tag, i) => (
+        <>
+           {tag} 
+          {i < tags.length - 1 &&  '·' }
+        </>
+      ))}
+    </div>
+  </a>
+</div>
+
+<script>
+  function initTilt() {
+    const maxTilt = 10;
+
+    function onMouseMove(e) {
+      const card = e.currentTarget;
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const percentX = x / rect.width;
+      const percentY = y / rect.height;
+      const rotateY = (percentX - 0.5) * (maxTilt * 2);
+      const rotateX = (0.5 - percentY) * (maxTilt * 2);
+      card.style.transform = `rotateY(${rotateY}deg) rotateX(${rotateX}deg) translateY(-4px)`;
+    }
+
+    function onMouseLeave(e) {
+      e.currentTarget.style.transform = 'rotateY(0deg) rotateX(0deg) translateY(0)';
+    }
+
+    document.querySelectorAll('[data-tilt]').forEach((card) => {
+      card.addEventListener('mousemove', onMouseMove);
+      card.addEventListener('mouseleave', onMouseLeave);
+    });
+  }
+
+  document.addEventListener('astro:page-load', initTilt);
+</script>
+
+<style>
+  .cover-stage {
+    perspective: 1500px;
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .cover {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: #111;
+    padding: 1.5rem;
+    max-width: 500px;
+    margin: 0 auto;
+
+    transform: rotateY(0deg) rotateX(0deg);
+    transform-style: preserve-3d;
+    transition: transform 0.1s ease-out, box-shadow 0.3s ease;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .cover:hover {
+    box-shadow:
+      -2px 4px 0 0 #e2e2e0,
+      -4px 8px 0 0 #d8d8d6,
+      -6px 12px 0 0 #cecece,
+      -16px 32px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .cover__header {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+
+  .cover__volume,
+  .cover__date {
+    font-size: 0.9rem;
+  }
+
+  .cover__image-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5.2;
+  }
+
+  .cover__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: #111;
+  }
+
+  .cover__scrim {
+    position: absolute;
+    inset: 0;
+    border: #111 5px solid;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.55) 0%,
+      rgba(0, 0, 0, 0) 40%
+    );
+  }
+
+  .cover__title {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 3rem;
+    color: #fff;
+    margin: 0;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2rem;
+  }
+
+  .cover__footer {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+  }
+</style>

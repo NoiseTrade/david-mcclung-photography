@@ -1,0 +1,58 @@
+---
+// No longer needs album data — static links only
+---
+
+<div class="nav-menu" id="nav-menu" aria-hidden="true">
+  <nav class="nav-menu__nav">
+    <a href="/" class="nav-menu__link">Home</a>
+    <a href="/about" class="nav-menu__link">About</a>
+    <a
+      href="https://www.instagram.com/davidmcclungphoto/"
+      class="nav-menu__link nav-menu__link--icon"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Instagram"
+    >
+      <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="2" y="2" width="20" height="20" rx="5" />
+        <circle cx="12" cy="12" r="4.5" />
+        <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+      </svg>
+    </a>
+  </nav>
+</div>
+
+<style>
+  .nav-menu {
+    position: fixed;
+    inset: 0;
+    background: #f4f4f3;
+    transform: translateX(100%);
+    transition: transform 0.4s ease;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    padding: 2rem;
+  }
+
+  :global(body.menu-open) .nav-menu {
+    transform: translateX(0);
+  }
+
+  .nav-menu__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .nav-menu__link {
+    font-family: 'Inconsolata', monospace;
+    font-size: 2.5rem;
+    text-decoration: none;
+    color: #111;
+  }
+
+  .nav-menu__link--icon {
+    display: inline-flex;
+  }
+</style>

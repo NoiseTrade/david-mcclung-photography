@@ -1,0 +1,88 @@
+---
+import { Image } from 'astro:assets';
+import Layout from '../layouts/Layout.astro';
+import { SITE } from '../site.config';
+import portraitImage from '../assets/Canada-22.webp';
+---
+
+<Layout title={`About — ${SITE.name}`}>
+  <main class="about">
+    <div class="about__image-wrap">
+      <Image
+        src={portraitImage}
+        alt={SITE.name}
+        width={800}
+        height={1000}
+        class="about__image"
+      />
+    </div>
+
+    <div class="about__content">
+      <h1 class="about__title">About</h1>
+      <div class="about__text">
+      	<p>
+          Hey I'm David! I'm an amateur photographer from Edinburgh, Scotland. Most of my photos are landscapes or architecture I've captured while travelling, but I also like to slip a little street photo in here and there.
+      	</p>
+      	<p>
+          I really enjoy working with both digital and film, choosing what feels right in the moment, and playing with the strengths of both mediums.
+      	</p>
+        <p>
+          Thanks for stopping by and taking a look!
+        </p>
+			</div>
+    </div>
+  </main>
+
+  <style>
+    .about {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      align-items: center;
+      text-align: center;
+    }
+
+    .about__image-wrap {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .about__image {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 4px;
+    }
+
+    .about__title {
+      font-size: 2.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1rem;
+      margin-bottom: 1rem;
+    }
+
+    .about__text {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: #333;
+      max-width: 600px;
+    }
+
+    @media (min-width: 768px) {
+      .about {
+        flex-direction: row;
+        text-align: left;
+        align-items: flex-start;
+        gap: 3rem;
+      }
+
+      .about__image-wrap {
+        flex-shrink: 0;
+        width: 35%;
+      }
+    }
+  </style>
+</Layout>

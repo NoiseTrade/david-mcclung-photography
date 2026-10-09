@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&display=swap');
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inconsolata', monospace;
+}
+
+body.menu-open,
+body.lightbox-open {
+  overflow: hidden;
+}
+
+html.menu-open,
+body.menu-open {
+  overflow: hidden;
+  height: 100%;
+}

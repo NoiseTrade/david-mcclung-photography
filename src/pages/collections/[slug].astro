@@ -1,0 +1,102 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import { getGalleryImages } from '../../lib/galleryImages';
+import { withVolumes } from '../../lib/volumes';
+import Gallery from '../../components/Gallery.astro';
+
+export async function getStaticPaths() {
+  const albums = await getCollection('albums');
+  const getVolume = withVolumes(albums);
+
+  return albums.map((album) => ({
+    params: { slug: album.id },
+    props: { album, volume: getVolume(album) },
+  }));
+}
+
+interface Props {
+  album: CollectionEntry<'albums'>;
+  volume: string;
+}
+
+const { album, volume } = Astro.props;
+const { title, publishDate, tags, description, coverImage } = album.data;
+
+const galleryImages = await getGalleryImages(album.id);
+const formattedDate = publishDate.toLocaleDateString('en-US', {
+  month: 'long',
+  year: 'numeric',
+});
+---
+
+<Layout title={`${title} — Photography`}>
+  <main class="collection">
+    <div class="collection__hero">
+      <Image
+        src={coverImage}
+        alt={title}
+        width={1600}
+        height={900}
+        class="collection__hero-image"
+        transition:name={`cover-image-${album.id}`}
+      />
+    </div>
+
+    <div class="collection__intro">
+      <h1 class="collection__title" transition:name={`cover-title-${album.id}`}>{title}</h1>
+      <p class="collection__meta">{volume} — {formattedDate}</p>
+      <p class="collection__tags">{tags.join(' · ')}</p>
+      <p class="collection__description">{description}</p>
+    </div>
+
+    <Gallery images={galleryImages} />
+
+  </main>
+
+  <style>
+    .collection__hero {
+      width: 100%;
+      max-height: 100vh;
+    }
+
+    .collection__hero-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    .collection__intro {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+
+    .collection__title {
+      font-size: 3rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .collection__meta,
+    .collection__tags {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #555;
+      margin: 0.25rem 0;
+    }
+
+    .collection__description {
+      margin-top: 1.5rem;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: #333;
+    }
+  </style>
+</Layout>

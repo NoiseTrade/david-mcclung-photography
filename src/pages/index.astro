@@ -1,0 +1,45 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+import MagazineCover from '../components/MagazineCover.astro';
+import AlbumGridCard from '../components/AlbumGridCard.astro';
+import { SITE } from '../site.config';
+import { withVolumes } from '../lib/volumes';
+
+const albums = await getCollection('albums');
+const getVolume = withVolumes(albums);
+
+const sorted = albums.sort(
+  (a: CollectionEntry<'albums'>, b: CollectionEntry<'albums'>) =>
+    b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
+);
+
+const [featured, ...rest] = sorted;
+---
+
+<Layout title={SITE.name}>
+  <section class="featured">
+    <MagazineCover
+      title={featured.data.title}
+      volume={getVolume(featured)}
+      publishDate={featured.data.publishDate}
+      coverImage={featured.data.coverImage}
+      tags={featured.data.tags}
+      slug={featured.id}
+      category={featured.data.category}
+      size="large"
+    />
+  </section>
+
+  {rest.length > 0 && (
+    <AlbumGridCard albums={rest} getVolume={getVolume} />
+  )}
+
+  <style>
+    .featured {
+      display: flex;
+      justify-content: center;
+      padding: 3rem 1.5rem;
+    }
+  </style>
+</Layout>

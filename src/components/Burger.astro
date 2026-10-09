@@ -1,0 +1,72 @@
+<button class="burger" id="burger" aria-label="Open menu" aria-expanded="false">
+  <div class="burger__line"></div>
+  <div class="burger__line"></div>
+  <div class="burger__line"></div>
+    
+</button>
+
+<script>
+  const burger = document.getElementById('burger')!;
+  const menu = document.getElementById('nav-menu')!;
+
+  function initBurger() {
+    const burger = document.getElementById('burger');
+    const menu = document.getElementById('nav-menu');
+    if (!burger || !menu) return;
+
+    burger.addEventListener('click', () => {
+      const isOpen = document.body.classList.toggle('menu-open');
+      burger.setAttribute('aria-expanded', String(isOpen));
+      menu.setAttribute('aria-hidden', String(!isOpen));
+    });
+  }
+
+  document.addEventListener('astro:page-load', initBurger);
+  
+</script>
+
+<style>
+  .burger {
+    width: 28px;
+    height: 20px;
+    position: relative;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 110;
+  }
+
+  .burger__line {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #111;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+
+  .burger__line:nth-child(1) {
+    top: 0;
+  }
+
+  .burger__line:nth-child(2) {
+    top: 9px;
+  }
+
+  .burger__line:nth-child(3) {
+    top: 18px;
+  }
+
+  :global(body.menu-open) .burger__line:nth-child(1) {
+    transform: translateY(9px) rotate(45deg);
+  }
+
+  :global(body.menu-open) .burger__line:nth-child(2) {
+    opacity: 0;
+  }
+
+  :global(body.menu-open) .burger__line:nth-child(3) {
+    transform: translateY(-9px) rotate(-45deg);
+  }
+</style>

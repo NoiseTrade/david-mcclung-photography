@@ -1,0 +1,56 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import MagazineCover from './MagazineCover.astro';
+
+interface Props {
+  albums: CollectionEntry<'albums'>[];
+  getVolume: (album: CollectionEntry<'albums'>) => string;
+}
+
+const { albums, getVolume } = Astro.props;
+---
+
+<section class="album-grid">
+  {albums.map((album) => (
+    <MagazineCover
+      title={album.data.title}
+      volume={getVolume(album)}
+      publishDate={album.data.publishDate}
+      coverImage={album.data.coverImage}
+      tags={album.data.tags}
+      slug={album.id}
+      category={album.data.category}
+      size="small"
+    />
+  ))}
+</section>
+
+<style>
+  .album-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem;
+    justify-items: center;
+  }
+
+  @media (min-width: 600px) {
+    .album-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .album-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (min-width: 1440px) {
+    .album-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+</style>
