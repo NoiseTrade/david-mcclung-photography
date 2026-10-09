@@ -2,6 +2,8 @@
 import '../styles/global.css';
 import Navbar from '../components/Navbar.astro';
 import { ClientRouter } from 'astro:transitions';
+import { SITE } from '../site.config';
+
 
 interface Props {
   title?: string;
@@ -18,6 +20,7 @@ const { title = 'David McClung Photography' } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
     <title>{title}</title>
     <ClientRouter />
   </head>

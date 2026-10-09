@@ -1,4 +1,4 @@
 export const SITE = {
-  name: "David McClung Photography", // swap in however you want it displayed
+  name: "David McClung Photography", 
   description: "Photo collections",
 };
