@@ -42,6 +42,8 @@ const formattedDate = publishDate.toLocaleDateString('en-US', {
         alt={title}
         width={1600}
         height={900}
+        widths={[640, 1024, 1600]}
+        sizes="(max-width: 1440px) 100vw, 1440px"
         class="collection__hero-image"
         transition:name={`cover-image-${album.id}`}
       />

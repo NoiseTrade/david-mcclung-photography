@@ -6,13 +6,14 @@
 </button>
 
 <script>
-  const burger = document.getElementById('burger')!;
-  const menu = document.getElementById('nav-menu')!;
-
   function initBurger() {
     const burger = document.getElementById('burger');
     const menu = document.getElementById('nav-menu');
     if (!burger || !menu) return;
+
+    document.body.classList.remove('menu-open');
+    burger.setAttribute('aria-expanded', 'false');
+    menu.setAttribute('aria-hidden', 'true');
 
     burger.addEventListener('click', () => {
       const isOpen = document.body.classList.toggle('menu-open');
@@ -22,7 +23,6 @@
   }
 
   document.addEventListener('astro:page-load', initBurger);
-  
 </script>
 
 <style>

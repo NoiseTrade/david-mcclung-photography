@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
 import type { GalleryImage } from '../lib/galleryImages';
 
 interface Props {
@@ -7,12 +7,60 @@ interface Props {
 }
 
 const { images } = Astro.props;
+
+function formatExifCamera(exif: GalleryImage['exif']) {
+  const parts: string[] = [];
+  if (exif.camera) parts.push(exif.camera);
+  if (exif.lens) parts.push(exif.lens);
+  return parts.join(' · ');
+}
+
+function formatExifSettings(exif: GalleryImage['exif']) {
+  const parts: string[] = [];
+  if (exif.focalLength) parts.push(`${Math.round(exif.focalLength)}mm`);
+  if (exif.aperture) parts.push(`f/${exif.aperture}`);
+  if (exif.shutterSpeed) parts.push(exif.shutterSpeed);
+  if (exif.iso) parts.push(`ISO ${exif.iso}`);
+  return parts.join(' · ');
+}
+
+const galleryItems = await Promise.all(
+  images.map(async ({ image, exif }) => {
+    const optimized = await getImage({
+      src: image,
+      widths: [800, 1280, 1920],
+      format: 'webp',
+    });
+    return {
+      image,
+      src: optimized.src,
+      srcSet: optimized.srcSet.attribute,
+      camera: formatExifCamera(exif),
+      settings: formatExifSettings(exif),
+    };
+  })
+);
 ---
 
 <div class="gallery">
-  {images.map(({ image }, i) => (
-    <button class="gallery__item" data-index={i} aria-label="Open image">
-      <Image src={image} alt="" width={800} class="gallery__image" />
+  {galleryItems.map(({ image, src, srcSet, camera, settings }, i) => (
+    <button
+      class="gallery__item"
+      data-index={i}
+      data-src={src}
+      data-srcset={srcSet}
+      data-camera={camera}
+      data-settings={settings}
+      aria-label="Open image"
+    >
+      <Image
+        src={image}
+        alt=""
+        widths={[400, 600, 900]}
+        sizes="(max-width: 600px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        loading="lazy"
+        class="gallery__image"
+      />
     </button>
   ))}
 </div>
@@ -21,89 +69,100 @@ const { images } = Astro.props;
   <button class="lightbox__close" id="lightbox-close" aria-label="Close">&times;</button>
   <button class="lightbox__arrow lightbox__prev" id="lightbox-prev" aria-label="Previous"></button>
   <button class="lightbox__arrow lightbox__next" id="lightbox-next" aria-label="Next"></button>
-  <img src="" alt="" class="lightbox__image" id="lightbox-image" />
+  <img src="" srcset="" sizes="90vw" alt="" class="lightbox__image" id="lightbox-image" />
   <div class="lightbox__exif">
     <p class="lightbox__exif-camera" id="lightbox-camera"></p>
     <p class="lightbox__exif-settings" id="lightbox-settings"></p>
   </div>
 </div>
 
-<script define:vars={{
-  images: images.map(({ image }) => image.src),
-  exifData: images.map(({ exif }) => exif),
-}}>
+<script>
+let galleryCleanup: (() => void) | undefined;
 
 function initGallery() {
+  if (galleryCleanup) galleryCleanup();
+
   const lightbox = document.getElementById('lightbox');
   if (!lightbox) return; // guards against running on pages with no gallery
 
-  const lightboxImage = document.getElementById('lightbox-image');
+  const controller = new AbortController();
+  const { signal } = controller;
+
+  const lightboxImage = document.getElementById('lightbox-image') as HTMLImageElement | null;
   const lightboxCamera = document.getElementById('lightbox-camera');
   const lightboxSettings = document.getElementById('lightbox-settings');
   const closeBtn = document.getElementById('lightbox-close');
   const prevBtn = document.getElementById('lightbox-prev');
   const nextBtn = document.getElementById('lightbox-next');
-  const items = document.querySelectorAll('.gallery__item');
+  const items = Array.from(document.querySelectorAll<HTMLButtonElement>('.gallery__item'));
+
+  if (!lightboxImage || !lightboxCamera || !lightboxSettings || !closeBtn || !prevBtn || !nextBtn || items.length === 0) {
+    return;
+  }
 
   let current = 0;
 
-  function formatExifCamera(exif) {
-    const parts = [];
-    if (exif.camera) parts.push(exif.camera);
-    if (exif.lens) parts.push(exif.lens);
-    return parts.join(' · ');
-  }
-
-  function formatExifSettings(exif) {
-    const parts = [];
-    if (exif.aperture) parts.push(`f/${exif.aperture}`);
-    if (exif.shutterSpeed) parts.push(exif.shutterSpeed);
-    if (exif.iso) parts.push(`ISO ${exif.iso}`);
-    return parts.join(' · ');
-  }
-
   function render() {
-    lightboxImage.src = images[current];
-    lightboxCamera.textContent = formatExifCamera(exifData[current]);
-    lightboxSettings.textContent = formatExifSettings(exifData[current]);
+    const item = items[current];
+    if (!item || !lightboxImage || !lightboxCamera || !lightboxSettings) return;
+    lightboxImage.src = item.dataset.src ?? '';
+    lightboxImage.srcset = item.dataset.srcset ?? '';
+    lightboxCamera.textContent = item.dataset.camera ?? '';
+    lightboxSettings.textContent = item.dataset.settings ?? '';
   }
 
-  function open(index) {
+  function open(index: number) {
     current = index;
     render();
-    lightbox.classList.add('is-open');
-    lightbox.setAttribute('aria-hidden', 'false');
+    lightbox!.classList.add('is-open');
+    lightbox!.setAttribute('aria-hidden', 'false');
     document.body.classList.add('lightbox-open');
   }
 
   function close() {
-    lightbox.classList.remove('is-open');
-    lightbox.setAttribute('aria-hidden', 'true');
+    lightbox!.classList.remove('is-open');
+    lightbox!.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('lightbox-open');
+    if (lightboxImage) {
+      lightboxImage.src = '';
+      lightboxImage.srcset = '';
+    }
   }
 
-  function show(index) {
-    current = (index + images.length) % images.length;
+  function show(index: number) {
+    current = (index + items.length) % items.length;
+    if (lightboxImage) {
+      lightboxImage.src = '';
+      lightboxImage.srcset = '';
+    }
     render();
   }
 
   items.forEach((item) => {
-    item.addEventListener('click', () => open(Number(item.dataset.index)));
+    item.addEventListener('click', () => open(Number(item.dataset.index)), { signal });
   });
 
-  closeBtn.addEventListener('click', close);
-  prevBtn.addEventListener('click', () => show(current - 1));
-  nextBtn.addEventListener('click', () => show(current + 1));
+  closeBtn.addEventListener('click', close, { signal });
+  prevBtn.addEventListener('click', () => show(current - 1), { signal });
+  nextBtn.addEventListener('click', () => show(current + 1), { signal });
 
   document.addEventListener('keydown', (e) => {
     if (!lightbox.classList.contains('is-open')) return;
     if (e.key === 'Escape') close();
     if (e.key === 'ArrowLeft') show(current - 1);
     if (e.key === 'ArrowRight') show(current + 1);
-  });
+  }, { signal });
+
+  galleryCleanup = () => {
+    close();
+    controller.abort();
+  };
 }
 
 document.addEventListener('astro:page-load', initGallery);
+document.addEventListener('astro:before-swap', () => {
+  if (galleryCleanup) galleryCleanup();
+});
 </script>
 
 <style>

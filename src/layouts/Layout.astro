@@ -32,6 +32,7 @@ const {
     {ogImage && <meta property="og:image" content={new URL(ogImage, Astro.site)} />}
     <meta property="og:type" content="website" />
     <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
     <title>{title}</title>
     <ClientRouter />
