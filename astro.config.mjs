@@ -1,10 +1,9 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-
-import markdoc from '@astrojs/markdoc';
+import sitemap from '@astrojs/sitemap';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://www.davidmcclungphoto.co.uk',
-  integrations: [markdoc()],
+  integrations: [sitemap()],
 });

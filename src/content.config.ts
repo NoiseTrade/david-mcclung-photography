@@ -12,6 +12,7 @@ const albums = defineCollection({
     order: z.number().optional(),
     description: z.string().optional(),
     category: z.enum(['digital', 'film', 'b-sides']).default('digital'),
+    alts: z.record(z.string(), z.string()).optional(),
   }),
 });
 
