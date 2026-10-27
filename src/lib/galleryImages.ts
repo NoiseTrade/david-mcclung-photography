@@ -9,6 +9,7 @@ const allImages = import.meta.glob<{ default: ImageMetadata }>(
 
 export interface GalleryImage {
   image: ImageMetadata;
+  alt: string;
   exif: {
     aperture?: number;
     shutterSpeed?: string;
@@ -16,6 +17,7 @@ export interface GalleryImage {
     focalLength?: number;
     camera?: string;
     lens?: string;
+    description?: string;
   };
 }
 
@@ -92,17 +94,28 @@ function parseExifBuffer(buf: Buffer): GalleryImage['exif'] {
     focalLength: exifIfd.get(0x920a) as number | undefined,
     camera: (ifd0.get(0x0110) as string | undefined) || undefined,
     lens: (exifIfd.get(0xa434) as string | undefined) || undefined,
+    description: (ifd0.get(0x010e) as string | undefined) || undefined,
   };
 }
 
-export async function getGalleryImages(slug: string): Promise<GalleryImage[]> {
+export interface GetGalleryImagesOptions {
+  albumTitle?: string;
+  alts?: Record<string, string>;
+}
+
+export async function getGalleryImages(
+  slug: string,
+  options: GetGalleryImagesOptions = {}
+): Promise<GalleryImage[]> {
   const entries = Object.entries(allImages).filter(([filePath]) =>
     filePath.includes(`/collections/${slug}/`)
   );
 
   const results = await Promise.all(
-    entries.map(async ([filePath, mod]) => {
+    entries.map(async ([filePath, mod], index) => {
       const absolutePath = path.join(process.cwd(), filePath);
+      const fileName = path.basename(filePath);
+      const baseName = path.parse(fileName).name;
       let exifData: GalleryImage['exif'] = {};
 
       try {
@@ -114,7 +127,11 @@ export async function getGalleryImages(slug: string): Promise<GalleryImage[]> {
         // No EXIF data found, or file doesn't support it — fail silently
       }
 
-      return { image: mod.default, exif: exifData };
+      const customAlt = options.alts?.[fileName] ?? options.alts?.[baseName];
+      const fallbackAlt = `${options.albumTitle || slug} — Photo ${index + 1}`;
+      const alt = customAlt || exifData.description || fallbackAlt;
+
+      return { image: mod.default, alt, exif: exifData };
     })
   );
 

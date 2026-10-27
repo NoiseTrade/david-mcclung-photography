@@ -25,14 +25,16 @@ function formatExifSettings(exif: GalleryImage['exif']) {
 }
 
 const galleryItems = await Promise.all(
-  images.map(async ({ image, exif }) => {
+  images.map(async ({ image, alt, exif }) => {
     const optimized = await getImage({
       src: image,
       widths: [800, 1280, 1920],
       format: 'webp',
+      quality: 80,
     });
     return {
       image,
+      alt,
       src: optimized.src,
       srcSet: optimized.srcSet.attribute,
       camera: formatExifCamera(exif),
@@ -43,22 +45,25 @@ const galleryItems = await Promise.all(
 ---
 
 <div class="gallery">
-  {galleryItems.map(({ image, src, srcSet, camera, settings }, i) => (
+  {galleryItems.map(({ image, alt, src, srcSet, camera, settings }, i) => (
     <button
       class="gallery__item"
       data-index={i}
       data-src={src}
       data-srcset={srcSet}
+      data-alt={alt}
       data-camera={camera}
       data-settings={settings}
-      aria-label="Open image"
+      aria-label={`Open image: ${alt}`}
     >
       <Image
         src={image}
-        alt=""
+        alt={alt}
         widths={[400, 600, 900]}
         sizes="(max-width: 600px) 100vw, (max-width: 1024px) 50vw, 33vw"
-        loading="lazy"
+        quality={75}
+        loading={i < 6 ? 'eager' : 'lazy'}
+        decoding="async"
         class="gallery__image"
       />
     </button>
@@ -69,7 +74,7 @@ const galleryItems = await Promise.all(
   <button class="lightbox__close" id="lightbox-close" aria-label="Close">&times;</button>
   <button class="lightbox__arrow lightbox__prev" id="lightbox-prev" aria-label="Previous"></button>
   <button class="lightbox__arrow lightbox__next" id="lightbox-next" aria-label="Next"></button>
-  <img src="" srcset="" sizes="90vw" alt="" class="lightbox__image" id="lightbox-image" />
+  <img src="" srcset="" sizes="90vw" alt="" decoding="async" class="lightbox__image" id="lightbox-image" />
   <div class="lightbox__exif">
     <p class="lightbox__exif-camera" id="lightbox-camera"></p>
     <p class="lightbox__exif-settings" id="lightbox-settings"></p>
@@ -101,25 +106,95 @@ function initGallery() {
   }
 
   let current = 0;
+  let renderToken = 0;
+  const preloaded = new Map<number, HTMLImageElement>();
+
+  function wrapIndex(index: number) {
+    return (index + items.length) % items.length;
+  }
+
+  function preloadSlide(index: number): HTMLImageElement | undefined {
+    const wrapped = wrapIndex(index);
+    const existing = preloaded.get(wrapped);
+    if (existing) return existing;
+
+    const item = items[wrapped];
+    if (!item) return undefined;
+
+    const img = new window.Image();
+    img.decoding = 'async';
+    img.sizes = '90vw';
+    if (item.dataset.srcset) img.srcset = item.dataset.srcset;
+    if (item.dataset.src) img.src = item.dataset.src;
+    preloaded.set(wrapped, img);
+    return img;
+  }
+
+  function preloadNeighbors(index: number) {
+    preloadSlide(index + 1);
+    preloadSlide(index - 1);
+    preloadSlide(index + 2);
+  }
 
   function render() {
     const item = items[current];
     if (!item || !lightboxImage || !lightboxCamera || !lightboxSettings) return;
-    lightboxImage.src = item.dataset.src ?? '';
-    lightboxImage.srcset = item.dataset.srcset ?? '';
+
+    const token = ++renderToken;
+    const fullSrc = item.dataset.src ?? '';
+    const fullSrcset = item.dataset.srcset ?? '';
+
+    lightboxImage.alt = item.dataset.alt ?? '';
     lightboxCamera.textContent = item.dataset.camera ?? '';
     lightboxSettings.textContent = item.dataset.settings ?? '';
+
+    const cachedFull = preloaded.get(current);
+    if (cachedFull && cachedFull.complete && cachedFull.naturalWidth > 0) {
+      lightboxImage.srcset = fullSrcset;
+      lightboxImage.src = fullSrc;
+      return;
+    }
+
+    // Show the already-loaded grid thumbnail immediately so there is zero blank delay
+    const thumbImg = item.querySelector('img');
+    const thumbSrc = thumbImg?.currentSrc || thumbImg?.src || '';
+    if (thumbSrc) {
+      lightboxImage.srcset = '';
+      lightboxImage.src = thumbSrc;
+    } else {
+      lightboxImage.srcset = fullSrcset;
+      lightboxImage.src = fullSrc;
+      return;
+    }
+
+    // Load the high-res image in the background and swap seamlessly once ready
+    const hiRes = preloadSlide(current);
+    if (!hiRes) return;
+
+    const applyHiRes = () => {
+      if (token !== renderToken || !lightboxImage) return;
+      lightboxImage.srcset = fullSrcset;
+      lightboxImage.src = fullSrc;
+    };
+
+    if (hiRes.complete && hiRes.naturalWidth > 0) {
+      applyHiRes();
+    } else {
+      hiRes.addEventListener('load', applyHiRes, { once: true, signal });
+    }
   }
 
   function open(index: number) {
-    current = index;
+    current = wrapIndex(index);
     render();
+    preloadNeighbors(current);
     lightbox!.classList.add('is-open');
     lightbox!.setAttribute('aria-hidden', 'false');
     document.body.classList.add('lightbox-open');
   }
 
   function close() {
+    renderToken++;
     lightbox!.classList.remove('is-open');
     lightbox!.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('lightbox-open');
@@ -130,16 +205,16 @@ function initGallery() {
   }
 
   function show(index: number) {
-    current = (index + items.length) % items.length;
-    if (lightboxImage) {
-      lightboxImage.src = '';
-      lightboxImage.srcset = '';
-    }
+    current = wrapIndex(index);
     render();
+    preloadNeighbors(current);
   }
 
   items.forEach((item) => {
-    item.addEventListener('click', () => open(Number(item.dataset.index)), { signal });
+    const index = Number(item.dataset.index);
+    item.addEventListener('pointerenter', () => preloadSlide(index), { signal, passive: true });
+    item.addEventListener('touchstart', () => preloadSlide(index), { signal, passive: true });
+    item.addEventListener('click', () => open(index), { signal });
   });
 
   closeBtn.addEventListener('click', close, { signal });
@@ -155,6 +230,7 @@ function initGallery() {
 
   galleryCleanup = () => {
     close();
+    preloaded.clear();
     controller.abort();
   };
 }

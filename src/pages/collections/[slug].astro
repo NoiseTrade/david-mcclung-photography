@@ -22,9 +22,12 @@ interface Props {
 }
 
 const { album, volume } = Astro.props;
-const { title, publishDate, tags, description, coverImage } = album.data;
+const { title, publishDate, tags, description, coverImage, alts } = album.data;
 
-const galleryImages = await getGalleryImages(album.id);
+const galleryImages = await getGalleryImages(album.id, {
+  albumTitle: title,
+  alts,
+});
 const formattedDate = publishDate.toLocaleDateString('en-US', {
   month: 'long',
   year: 'numeric',
@@ -44,6 +47,10 @@ const formattedDate = publishDate.toLocaleDateString('en-US', {
         height={900}
         widths={[640, 1024, 1600]}
         sizes="(max-width: 1440px) 100vw, 1440px"
+        quality={80}
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
         class="collection__hero-image"
         transition:name={`cover-image-${album.id}`}
       />
