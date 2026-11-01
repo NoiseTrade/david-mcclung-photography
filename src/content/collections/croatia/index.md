@@ -50,5 +50,4 @@ alts:
   Croatia-58.jpg: "Aerial view of the walled Old Town of Dubrovnik jutting into the turquoise Adriatic Sea, showcasing its dense cluster of terracotta rooftops, historic harbor filled with boats, and steep hillside backdrop."
   Croatia-59.jpg: "High aerial perspective of the lush, densely forested island of Lokrum surrounded by the calm, shimmering blue waters of the Adriatic Sea."
   Croatia-60.jpg: "Bird's-eye view of Fort Lovrijenac perched atop a sheer rocky promontory above dark turquoise waters, across a small cove from the western walls and red-tiled roofs of Dubrovnik."
-  Croatia-61.jpg: "Joyful group of twelve family members smiling, laughing, and making playful gestures while seated together on stone steps outside a traditional stone house with green shutters."
 ---
