@@ -28,7 +28,7 @@ const categoryColors: Record<string, string> = {
 const coverBackground = categoryColors[category] ?? categoryColors.digital;
 ---
 
-<div class="cover-stage">
+<div class:list={['cover-stage', { 'cover-stage__small': size === 'small' }]}>
   <a href={`/collections/${slug}`} class="cover" data-tilt style={`background: ${coverBackground};`}>    <div class="cover__header">
        <span>{volume} </span>
        <span>{formattedDate} </span>
@@ -169,12 +169,17 @@ const coverBackground = categoryColors[category] ?? categoryColors.digital;
     left: 0;
     right: 0;
     text-align: center;
+    padding: 0 1rem;
     font-size: 3rem;
     color: #fff;
     margin: 0;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.2rem;
+  }
+
+  .cover-stage__small .cover__title {
+    font-size: 1.75rem;
   }
 
   .cover__footer {
