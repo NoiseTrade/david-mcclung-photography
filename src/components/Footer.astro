@@ -1,0 +1,39 @@
+---
+---
+
+<footer class="footer">
+  <span class="footer__copyright"> David McClung &copy;</span>
+  <div class="footer__qr">
+    <img src="/qr-code.svg" alt="QR code for davidmcclungphoto.co.uk" width="100" height="100" loading="lazy" />
+     Share me!
+  </div>
+</footer>
+
+<style>
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2rem;
+    margin-top: auto;
+    font-family: 'Inconsolata', monospace;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+  }
+
+  .footer__copyright {
+    font-weight: 500;
+  }
+
+  .footer__qr {
+    display: flex;
+    align-items: center;
+  }
+
+  .footer__qr :global(img),
+  .footer__qr :global(svg) {
+    width: 64px;
+    height: 64px;
+    display: block;
+  }
+</style>
